@@ -16,12 +16,6 @@ double ** costM;
 int dimension;
 
 typedef struct{
-    double cost;
-    int nodeInserted;
-    int edgeRemoved;
-} InsertionInfo;
-
-typedef struct{
     vector<vector<double>> C;
     vector<vector<double>> T;
     vector<vector<int>> W;
@@ -38,64 +32,38 @@ void printCostM() {
     cout << endl << endl;
 }
 
-
-bool compareCosts(const InsertionInfo &a, const InsertionInfo &b) {
-    return (a.cost < b.cost);
-}
-
-vector<int> construction(double alpha)
+vector<int> construction()
 {
     vector<int> solution = {1};
-
     vector<int> candidateList;
 
-    const int subtourSize = 3;
-
     //Fills candidates list according to dimension
-    for(int i = 2; i < dimension + 1; i++){ //dimension -1(node 1 already in) +2(starts at 2)
+    for(int i = 2; i <= dimension; i++){
         candidateList.push_back(i);
     }
 
-    //Initial subtour
-    for(int i = 0; i < subtourSize; i++){
-        int j = rand() % candidateList.size();
-        solution.push_back(candidateList[j]);
-        candidateList.erase(candidateList.begin() + j);
-    }
-    solution.push_back(1);
-
-
+    int j = 0;
     while(!candidateList.empty())
     {
-        vector<InsertionInfo> insertionCosts((solution.size() - 1) * candidateList.size());
+        int closestNode;
+        double closestNodeDistance = std::numeric_limits<double>::max();
 
-        //Calculates and sorts insertion costs
-        for(int i = 0, j = 1, l = 0; i < solution.size() - 1; i++, j++){
-            for(auto k : candidateList){
-                insertionCosts[l].cost = costM[solution[i]][k] + costM[solution[j]][k] - costM[solution[j]][solution[i]];
-                insertionCosts[l].nodeInserted = k;
-                insertionCosts[l].edgeRemoved = j;
-                l++;
-            }
+        for(int k : candidateList)
+        {
+            if(costM[solution[j]][k] < closestNodeDistance)
+            {
+                closestNodeDistance = costM[solution[j]][k];
+                closestNode = k;
+            }    
         }
 
-        sort(insertionCosts.begin(), insertionCosts.end(), compareCosts);
+        solution.push_back(closestNode);
+        candidateList.erase(std::remove(candidateList.begin(), candidateList.end(), closestNode), candidateList.end());
 
-        //Inserts according to cost
-        int listFraction = alpha * insertionCosts.size();
-        if(listFraction < 1)
-            listFraction = 1;
-
-        int x = rand() % listFraction;
-        solution.insert(solution.begin() + insertionCosts[x].edgeRemoved, insertionCosts[x].nodeInserted);
-
-        //Removes candidate from list
-        for(int i = 0; i < candidateList.size(); i++) {
-            if(candidateList[i] == insertionCosts[x].nodeInserted) {
-                candidateList.erase(candidateList.begin() + i);
-            }
-        }
+        j++;
     }
+
+    solution.push_back(1);
 
     return solution;
 }
@@ -397,8 +365,8 @@ int main(int argc, char** argv) {
     srand(time(NULL));
 
     readData(argc, argv, &dimension, &costM);
-    //std::cout << "\tCOST MATRIX: \n";
-    //printCostM();
+    std::cout << "\tCOST MATRIX: \n";
+    printCostM();
 
     auto timerStart = chrono::system_clock::now();
 
@@ -410,8 +378,7 @@ int main(int argc, char** argv) {
 
     for(int i = 0; i < I_MAX; i++)
     {
-        double alpha = (rand() % 100)/100;
-        solutionAlpha = construction(alpha);
+        solutionAlpha = construction();
         solutionBeta = solutionAlpha;
 
         costAlpha = solutionCost(solutionAlpha);
