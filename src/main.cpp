@@ -83,10 +83,9 @@ ReoptData calcReopt(ReoptData reopt, vector<int> s, int ii, int jj){
         for(int i = small; i <= j; i++){
             reopt.C[i][j] = 0;
             reopt.T[i][j] = 0;
-            reopt.W[i][j] = j - i;
+            reopt.W[i][j] = j - i + 1;
 
             if(i == j){
-                reopt.W[i][j] = 1;
                 continue;
             }
 
@@ -101,7 +100,7 @@ ReoptData calcReopt(ReoptData reopt, vector<int> s, int ii, int jj){
         for(int j = small; j < i; j++){
             reopt.C[i][j] = 0;
             reopt.T[i][j] = 0;
-            reopt.W[i][j] = i - j;
+            reopt.W[i][j] = i - j + 1;
 
             for(int k = i, l = j; l < i; k--, l++){
                 reopt.C[s[i]][s[j]] += costM[s[k]][s[k-1]];
@@ -122,35 +121,61 @@ ReoptData calcReopt(ReoptData reopt, vector<int> s){
         for(int i = 0; i <= j; i++){
             reopt.C[i][j] = 0;
             reopt.T[i][j] = 0;
-            reopt.W[i][j] = j - i;
+            reopt.W[i][j] = j - i + 1;
 
             if(i == j){
-                reopt.W[i][j] = 1;
                 continue;
             }
 
             for(int k = i; k < j; k++){
                 reopt.C[s[i]][s[j]] += costM[s[k]][s[k+1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k+1]] + reopt.T[s[i]][s[j]];
+                reopt.T[s[i]][s[j]] += costM[s[k]][s[k+1]] + reopt.T[s[i]][s[j]]; //Checar se esse calculo ta certo
             }
         }
     }
 
+    //Reverse (for 2opt)
     for(int i = 1; i < dimension; i++){
         for(int j = 1; j < i; j++){
             reopt.C[i][j] = 0;
             reopt.T[i][j] = 0;
-            reopt.W[i][j] = i - j;
+            reopt.W[i][j] = i - j + 1;
 
             for(int k = i, l = j; l < i; k--, l++){
                 reopt.C[s[i]][s[j]] += costM[s[k]][s[k-1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k-1]] + reopt.T[s[i]][s[j]];
+                reopt.T[s[i]][s[j]] += costM[s[k]][s[k-1]] + reopt.T[s[i]][s[j]]; //Checar se esse calculo ta certo (se o reverso esta realmente sendo contabilizado)
             }
         }
     }
 
     return reopt;
 }
+
+/*swap:
+    i    j
+ 01|2|34|5|60
+ 01|5|34|2|60
+reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
+
+flip:
+     i j
+ 012|345|60
+ 012|543|60
+reopt[0][i-1] o reopt[j][i] o reopt[j+1][dimension]
+
+reinsertion:
+     i       j
+ 012|345|678|90
+ 012|678|345|90
+reopt[0][i-1] o reopt[i+subsegSize][j-1] o reopt[i][i+subsegSize-1] o reopt[j][dimension]
+
+double bridge:
+   1s  1e 2s 2e
+ 01|234|56|78|90
+ 01|87|56|432|90
+reopt[0][subseg1Start-1] o reopt[subseg2End-1][subseg2Start] o reopt[subseg1End][subseg2Start-1] o reopt[subseg1End-1][subseg1Start] o reopt[subseg2End][dimension]
+
+*/
 
 vector<int> swap (vector<int> s, double *bestDelta){
     int best_i = 0, best_j = 0;
@@ -365,8 +390,8 @@ int main(int argc, char** argv) {
     srand(time(NULL));
 
     readData(argc, argv, &dimension, &costM);
-    std::cout << "\tCOST MATRIX: \n";
-    printCostM();
+    //std::cout << "\tCOST MATRIX: \n";
+    //printCostM();
 
     auto timerStart = chrono::system_clock::now();
 
