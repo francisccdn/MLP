@@ -16,9 +16,9 @@ double ** costM;
 int dimension;
 
 typedef struct{
-    vector<vector<double>> C;
-    vector<vector<double>> T;
-    vector<vector<int>> W;
+    double C;
+    double T;
+    int W;
 } ReoptData;
 
 void printCostM() {
@@ -42,7 +42,7 @@ vector<int> construction()
         candidateList.push_back(i);
     }
 
-    int j = 0;
+    int r = 0;
     while(!candidateList.empty())
     {
         int closestNode;
@@ -50,17 +50,16 @@ vector<int> construction()
 
         for(int k : candidateList)
         {
-            if(costM[solution[j]][k] < closestNodeDistance)
+            if(costM[solution[r]][k] < closestNodeDistance)
             {
-                closestNodeDistance = costM[solution[j]][k];
+                closestNodeDistance = costM[solution[r]][k];
                 closestNode = k;
             }    
         }
 
+        r = closestNode;
         solution.push_back(closestNode);
         candidateList.erase(std::remove(candidateList.begin(), candidateList.end(), closestNode), candidateList.end());
-
-        j++;
     }
 
     solution.push_back(1);
@@ -68,68 +67,75 @@ vector<int> construction()
     return solution;
 }
 
-double solutionCost (vector <int> solution){
-    double cost = 0;
-    for(int i = 0; i < solution.size() - 1; i++){
-        cost += costM[solution[i]][solution[i+1]];
+double solutionCost (vector <int> s){
+    ReoptData cost;
+    const int i = 0, j = s.size();
+
+    cost.C = 0;
+    cost.T = 0;
+
+    for(int k = i; k < j; k++){
+        cost.T += costM[s[k]][s[k+1]];
+        cost.C += costM[s[k]][s[k+1]] + cost.T; //Checar se esse calculo ta certo
     }
-    return cost;
+
+    return cost.C;
 }
 
-ReoptData calcReopt(ReoptData reopt, vector<int> s, int ii, int jj){
+void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj){
     int small = (ii <= jj)? ii : jj;
     
     for(int j = small; j < dimension; j++){
         for(int i = small; i <= j; i++){
-            reopt.C[i][j] = 0;
-            reopt.T[i][j] = 0;
-            reopt.W[i][j] = j - i + 1;
+            (*reopt)[s[i]][s[j]].C = 0;
+            (*reopt)[s[i]][s[j]].T = 0;
+            (*reopt)[s[i]][s[j]].W = j - i + 1;
 
             if(i == j){
                 continue;
             }
 
             for(int k = i; k < j; k++){
-                reopt.C[s[i]][s[j]] += costM[s[k]][s[k+1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k+1]] + reopt.T[s[i]][s[j]];
+                (*reopt)[s[i]][s[j]].T += costM[s[k]][s[k+1]];
+                (*reopt)[s[i]][s[j]].C += costM[s[k]][s[k+1]] + (*reopt)[s[i]][s[j]].T;
             }
         }
     }
 
     for(int i = small; i < dimension; i++){
         for(int j = small; j < i; j++){
-            reopt.C[i][j] = 0;
-            reopt.T[i][j] = 0;
-            reopt.W[i][j] = i - j + 1;
+            (*reopt)[s[i]][s[j]].C = 0;
+            (*reopt)[s[i]][s[j]].T = 0;
+            (*reopt)[s[i]][s[j]].W = i - j + 1;
 
             for(int k = i, l = j; l < i; k--, l++){
-                reopt.C[s[i]][s[j]] += costM[s[k]][s[k-1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k-1]] + reopt.T[s[i]][s[j]];
+                (*reopt)[s[i]][s[j]].T += costM[s[k]][s[k-1]];
+                (*reopt)[s[i]][s[j]].C += costM[s[k]][s[k-1]] + (*reopt)[s[i]][s[j]].T;
             }
         }
     }
-
-    return reopt;
 }
 
-ReoptData calcReopt(ReoptData reopt, vector<int> s){
-    reopt.W[0][0] = 0;
-    reopt.T[0][0] = 0;
-    reopt.C[0][0] = 0;
+vector<vector<ReoptData>> calcReopt(vector<int> s){
+    vector<vector<ReoptData>> reopt;
+
+    reopt[s[0]][s[0]].W = 0;
+    reopt[s[0]][s[0]].T = 0;
+    reopt[s[0]][s[0]].C = 0;
     
     for(int j = 1; j < dimension; j++){
         for(int i = 0; i <= j; i++){
-            reopt.C[i][j] = 0;
-            reopt.T[i][j] = 0;
-            reopt.W[i][j] = j - i + 1;
+            reopt[s[i]][s[j]].C = 0;
+            reopt[s[i]][s[j]].T = 0;
+            reopt[s[i]][s[j]].W = j - i + 1;
 
             if(i == j){
                 continue;
             }
 
             for(int k = i; k < j; k++){
-                reopt.C[s[i]][s[j]] += costM[s[k]][s[k+1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k+1]] + reopt.T[s[i]][s[j]]; //Checar se esse calculo ta certo
+                reopt[s[i]][s[j]].T += costM[s[k]][s[k+1]];
+                reopt[s[i]][s[j]].C += costM[s[k]][s[k+1]] + reopt[s[i]][s[j]].T; //Checar se esse calculo ta certo
             }
         }
     }
@@ -137,13 +143,13 @@ ReoptData calcReopt(ReoptData reopt, vector<int> s){
     //Reverse (for 2opt)
     for(int i = 1; i < dimension; i++){
         for(int j = 1; j < i; j++){
-            reopt.C[i][j] = 0;
-            reopt.T[i][j] = 0;
-            reopt.W[i][j] = i - j + 1;
+            reopt[s[i]][s[j]].C = 0;
+            reopt[s[i]][s[j]].T = 0;
+            reopt[s[i]][s[j]].W = i - j + 1;
 
             for(int k = i, l = j; l < i; k--, l++){
-                reopt.C[s[i]][s[j]] += costM[s[k]][s[k-1]];
-                reopt.T[s[i]][s[j]] += costM[s[k]][s[k-1]] + reopt.T[s[i]][s[j]]; //Checar se esse calculo ta certo (se o reverso esta realmente sendo contabilizado)
+                reopt[s[i]][s[j]].T += costM[s[k]][s[k-1]];
+                reopt[s[i]][s[j]].C += costM[s[k]][s[k-1]] + reopt[s[i]][s[j]].T; //Checar se esse calculo ta certo (se o reverso esta realmente sendo contabilizado)
             }
         }
     }
@@ -155,48 +161,83 @@ ReoptData calcReopt(ReoptData reopt, vector<int> s){
     i    j
  01|2|34|5|60
  01|5|34|2|60
-reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
+ reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
+     i j
+ 012|3|4|560
+ 012|4|3|560
+ reopt[0][i-1] o reopt[j][j] o reopt[i][i] o reopt[j+1][dimension]
 
 flip:
      i j
  012|345|60
  012|543|60
-reopt[0][i-1] o reopt[j][i] o reopt[j+1][dimension]
+ reopt[0][i-1] o reopt[j][i] o reopt[j+1][dimension]
 
 reinsertion:
      i       j
  012|345|678|90
  012|678|345|90
-reopt[0][i-1] o reopt[i+subsegSize][j-1] o reopt[i][i+subsegSize-1] o reopt[j][dimension]
+ reopt[0][i-1] o reopt[i+subsegSize][j-1] o reopt[i][i+subsegSize-1] o reopt[j][dimension]
+    j    i
+ 01|2345|678|90
+ 01|678|2345|90
+ reopt[0][j-1] o reopt[i][i+subsegSize-1] o reopt[j][i-1] o reopt[i+subsegSize][dimension]
 
 double bridge:
    1s  1e 2s 2e
  01|234|56|78|90
  01|87|56|432|90
-reopt[0][subseg1Start-1] o reopt[subseg2End-1][subseg2Start] o reopt[subseg1End][subseg2Start-1] o reopt[subseg1End-1][subseg1Start] o reopt[subseg2End][dimension]
+ reopt[0][subseg1Start-1] o reopt[subseg2End-1][subseg2Start] o reopt[subseg1End][subseg2Start-1] o reopt[subseg1End-1][subseg1Start] o reopt[subseg2End][dimension]
 
 */
 
-vector<int> swap (vector<int> s, double *bestDelta){
+ReoptData concatCost(vector<vector<ReoptData>> reopt, int u, int v, int w, int x)
+{ // O = (Ou, ... , Ov) and O' = (O'w, ... , O'x) are our subsequences
+    ReoptData cost;
+
+    cost.T = reopt[u][v].T + reopt[v][w].T + reopt[w][x].T;
+    cost.C = reopt[u][v].C + reopt[w][x].W * (reopt[u][v].T + reopt[v][w].T) + reopt[w][x].C;
+    cost.W = reopt[u][v].W + reopt[w][x].W;
+
+    return cost;  
+}
+
+ReoptData concatCost(vector<vector<ReoptData>> reopt, ReoptData sq1, int v, int w, int x)
+{ // O = (Ou, ... , Ov) = sq1 and O' = (O'w, ... , O'x) = sq2 are our subsequences
+    ReoptData cost;
+
+    cost.T = sq1.T + reopt[v][w].T + reopt[w][x].T;
+    cost.C = sq1.C + reopt[w][x].W * (sq1.T + reopt[v][w].T) + reopt[w][x].C;
+    cost.W = sq1.W + reopt[w][x].W;
+
+    return cost;  
+}
+
+vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
     int best_i = 0, best_j = 0;
-    *bestDelta = 0; //0 = no change
-    double delta = 0, semiDelta = 0;
+    double bestCost = numeric_limits<double>::max();
+    ReoptData sq[3];
+    ReoptData cost;
 
     for(int j = 2; j < s.size() - 1; j++)
     {
-        semiDelta =  -costM[s[j]][s[j-1]] -costM[s[j]][s[j+1]]; //relies only on j
-
         for(int i = 1; i < j; i++)
         {
             if(i == j - 1){ // If they're adjacent
-                delta = costM[s[j]][s[i - 1]] + costM[s[i]][s[j + 1]] - costM[s[i]][s[i - 1]] - costM[s[j]][s[j + 1]];
+                sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
+                sq[1] = concatCost(*reopt, sq[0], s[j], s[i], s[i]);
+                cost = concatCost(*reopt, sq[1], s[i], s[j+1], s[s.size()]);
+                //reopt[0][i-1] o reopt[j][j] o reopt[i][i] o reopt[j+1][dimension]
             }else{
-                delta = costM[s[i]][s[j-1]] + costM[s[i]][s[j+1]] + costM[s[j]][s[i-1]] + costM[s[j]][s[i+1]]
-                - costM[s[i]][s[i-1]] - costM[s[i]][s[i+1]] + semiDelta;
+                sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
+                sq[1] = concatCost(*reopt, sq[0], s[j], s[i+1], s[j-1]);
+                sq[2] = concatCost(*reopt, sq[1], s[j-1], s[i], s[i]);
+                cost = concatCost(*reopt, sq[2], s[i], s[j+1], s[s.size()]);
+                //reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
             }
 
-            if(delta < *bestDelta){
-                *bestDelta = delta;
+            if(cost.C < bestCost){
+                bestCost = cost.C;
 
                 best_i = i;
                 best_j = j;
@@ -204,31 +245,33 @@ vector<int> swap (vector<int> s, double *bestDelta){
         }
     }
 
-    if(*bestDelta < 0){
+    if(bestCost < numeric_limits<double>::max()){
         std::swap(s[best_j], s[best_i]);
+        *improved = true;
+        calcReopt(s, reopt, best_i, best_j);
     }else{
-        *bestDelta = 0;
+        *improved = false;
     }
 
     return s;
 }
 
-vector<int> flip (vector<int> s, double *bestDelta){
+vector<int> flip (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
     int best_i = 0, best_j = 0;
-    *bestDelta = 0; //0 = no change
-    double delta = 0, semiDelta = 0;
+    double bestCost = numeric_limits<double>::max();
+    ReoptData sq;
+    ReoptData cost;
 
     for(int j = 3; j < s.size() - 1; j++)
     {
-        semiDelta = -costM[s[j]][s[j+1]]; //relies only on j
-
         for(int i = 1; i < j - 1; i++)
         {
-            delta = -costM[s[i-1]][s[i]] + semiDelta + costM[s[i]][s[j+1]] +costM[s[j]][s[i-1]];
-
-            if(delta < *bestDelta - std::numeric_limits<double>::epsilon())
-            {
-                *bestDelta = delta;
+            sq = concatCost(*reopt, s[0], s[i-1], s[j], s[i]);
+            cost = concatCost(*reopt, sq, s[i], s[j+1], s[s.size()]);
+            //reopt[0][i-1] o reopt[j][i] o reopt[j+1][dimension]
+            
+            if(cost.C < bestCost){
+                bestCost = cost.C;
 
                 best_i = i;
                 best_j = j;
@@ -236,32 +279,45 @@ vector<int> flip (vector<int> s, double *bestDelta){
         }
     }
 
-    if(*bestDelta < std::numeric_limits<double>::epsilon()){
+    if(bestCost < std::numeric_limits<double>::max()){
         std::reverse(s.begin() + best_i, s.begin() + best_j + 1);
+        *improved = true;
+        calcReopt(s, reopt, best_i, best_j);
     }else{
-        *bestDelta = 0;
+        *improved = false;
     }
 
     return s;
 }
 
-vector<int> reinsertion (vector<int> s, double *bestDelta, int subsegSize){
+vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved, int subsegSize){
     int best_i = 0, best_j = 0;
-    *bestDelta = 0; //0 = no change
-    double delta = 0, semiDelta = 0;
+    double bestCost = numeric_limits<double>::max();
+    ReoptData sq[2];
+    ReoptData cost;
 
     for(int i = 1; i < s.size() - subsegSize; i++)
     {
-        semiDelta = costM[s[i - 1]][s[i + subsegSize]] - costM[s[i]][s[i - 1]] - costM[s[i + subsegSize - 1]][s[i + subsegSize]];
-
         for(int j = 1; j < s.size(); j++)
         {
             if(i <= j && j <= i + subsegSize) continue;
 
-            delta = costM[s[j - 1]][s[i]] + costM[s[i + subsegSize - 1]][s[j]] - costM[s[j]][s[j - 1]] + semiDelta;
+            if(i < j){
+                sq[0] = concatCost(*reopt, s[0], s[i-1], s[i+subsegSize], s[j-1]);
+                sq[1] = concatCost(*reopt, sq[0], s[j-1], s[i], s[i+subsegSize-1]);
+                cost = concatCost(*reopt, sq[1], s[i+subsegSize-1], s[j], s[s.size()]);
 
-            if(delta < *bestDelta - std::numeric_limits<double>::epsilon()){
-                *bestDelta = delta;
+                //reopt[0][i-1] o reopt[i+subsegSize][j-1] o reopt[i][i+subsegSize-1] o reopt[j][dimension]
+            }else{
+                sq[0] = concatCost(*reopt, s[0], s[j-1], s[i], s[i+subsegSize-1]);  
+                sq[1] = concatCost(*reopt, sq[0], s[i+subsegSize-1], s[j], s[i-1]);
+                cost = concatCost(*reopt, sq[1], s[i-1], s[i+subsegSize], s[s.size()]);
+
+                //reopt[0][j-1] o reopt[i][i+subsegSize-1] o reopt[j][i-1] o reopt[i+subsegSize][dimension]
+            }
+            
+            if(cost.C < bestCost){
+                bestCost = cost.C;
 
                 best_i = i;
                 best_j = j;
@@ -270,7 +326,7 @@ vector<int> reinsertion (vector<int> s, double *bestDelta, int subsegSize){
         }
     }
 
-    if(*bestDelta < std::numeric_limits<double>::epsilon())
+    if(bestCost < std::numeric_limits<double>::max())
     {
         vector<int> subseg(s.begin() + best_i, s.begin() + best_i + subsegSize);
 
@@ -282,8 +338,10 @@ vector<int> reinsertion (vector<int> s, double *bestDelta, int subsegSize){
             s.insert(s.begin() + best_j, subseg.begin(), subseg.end());
         }
 
+        *improved = true;
+        calcReopt(s, reopt, best_i, best_j);
     }else{
-        *bestDelta = 0;
+        *improved = false;
     }
 
     return s;
@@ -294,8 +352,9 @@ vector<int> RVND (vector<int> s, double *mainCost){
     int ngbh_n;
 
     vector<int> neighbour_s = s;
-    double neighbourCost = numeric_limits<double>::max();
-    double delta = 0; //Receives delta from neighbouthood movements
+    bool improved;
+
+    vector<vector<ReoptData>> costs = calcReopt(s);
 
     while(!ngbhList.empty())
     {
@@ -303,29 +362,29 @@ vector<int> RVND (vector<int> s, double *mainCost){
 
         switch(ngbh_n){
             case N1:
-                neighbour_s = swap(s, &delta);
+                neighbour_s = swap(s, &costs, &improved);
                 break;
             case N2:
-                neighbour_s = flip(s, &delta);
+                neighbour_s = flip(s, &costs, &improved);
                 break;
             case N3:
-                neighbour_s = reinsertion(s, &delta, 1);
+                neighbour_s = reinsertion(s, &costs, &improved, 1);
                 break;
             case N4:
-                neighbour_s = reinsertion(s, &delta, 2);
+                neighbour_s = reinsertion(s, &costs, &improved, 2);
                 break;
             case N5:
-                neighbour_s = reinsertion(s, &delta, 3);
+                neighbour_s = reinsertion(s, &costs, &improved, 3);
                 break;
         }
 
-        neighbourCost = *mainCost + delta;
-
-        if(neighbourCost < *mainCost){
+        if(improved){
             s = neighbour_s;
-            *mainCost = neighbourCost;
+            *mainCost = costs[s[0]][s[s.size()]].C;
+            improved = false;
 
             ngbhList = {N1, N2, N3, N4, N5};
+            //Reopt update is done in movement functions
         }else{
             ngbhList.erase(std::remove(ngbhList.begin(), ngbhList.end(), ngbh_n), ngbhList.end());
         }
@@ -334,11 +393,12 @@ vector<int> RVND (vector<int> s, double *mainCost){
     return s;
 }
 
-int randomRange(int min, int max){ // Inclusive
+int randomRange(int min, int max)
+{   // Inclusive
     return min + (rand() % (max - min + 1));
 }
 
-vector<int> perturb (vector<int> s, double costIn, double *costOut){
+vector<int> perturb (vector<int> s){
     int subseg1Start = 1, subseg1End = 1;
     int subseg2Start = 1, subseg2End = 1;
     // If s.size()/10 >= 2 -> max = s.size()/10, else -> max = 2
@@ -358,11 +418,6 @@ vector<int> perturb (vector<int> s, double costIn, double *costOut){
     const int subseg1Size = subseg1End - subseg1Start;
     const int subseg2Size = subseg2End - subseg2Start;
 
-    double delta = -costM[s[subseg1Start - 1]][s[subseg1Start]] -costM[s[subseg1End - 1]][s[subseg1End]]
-                   -costM[s[subseg2Start - 1]][s[subseg2Start]] -costM[s[subseg2End - 1]][s[subseg2End]]
-                   +costM[s[subseg1Start - 1]][s[subseg2End - 1]] +costM[s[subseg2Start]][s[subseg1End]]
-                   +costM[s[subseg2Start - 1]][s[subseg1End - 1]] +costM[s[subseg1Start]][s[subseg2End]];
-
     vector<int> subseg1(s.begin() + subseg1Start, s.begin() + subseg1End);
     vector<int> subseg2(s.begin() + subseg2Start, s.begin() + subseg2End);
 
@@ -380,8 +435,6 @@ vector<int> perturb (vector<int> s, double costIn, double *costOut){
         s.erase(s.begin() + subseg1Start + subseg1Size + subseg2Size, s.begin() + subseg1End + subseg1Size + subseg2Size);
         s.erase(s.begin() + subseg2Start + subseg1Size, s.begin() + subseg2End + subseg1Size);
     }
-
-    *costOut = costIn + delta;
 
     return s;
 }
@@ -418,7 +471,7 @@ int main(int argc, char** argv) {
                 iterILS = 0;
             }
 
-            solutionAlpha = perturb(solutionBeta, costBeta, &costAlpha);
+            solutionAlpha = perturb(solutionBeta);
         }
 
         if(costBeta < costOmega){
