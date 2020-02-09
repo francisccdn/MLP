@@ -1,4 +1,4 @@
-fin = open("bm.txt", "r")               # Results from running tsp 10 times for each instance
+fin = open("bm.txt", "r")               # Results from running mlp 10 times for each instance
 fout = open("results.txt", "w+")        # Output file
 ftarget = open("target.txt", "r")       # Target average results
 fsummary = open("summary.txt", "w+")    # Results summary, looking at off percentage
