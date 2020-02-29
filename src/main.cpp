@@ -108,7 +108,8 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
         }
     }
 
-    for(int i = small; i < s.size(); i++)
+    //Reverse (for 2opt)
+    for(int i = small; i < s.size()-1; i++)
     {
         for(int j = small; j < i; j++)
         {
@@ -129,9 +130,9 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
         }
     }
 
-    (*reopt)[s[0]][s[s.size()-1]].W = s.size();
-    (*reopt)[s[0]][s[s.size()-1]].T = (*reopt)[s[0]][s[s.size()-2]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T;
-    (*reopt)[s[0]][s[s.size()-1]].C = (*reopt)[0][s.size()-2].C + (*reopt)[s[0]][s.size()-2].T + (*reopt)[s.size()-2][s.size()-1].T;
+    (*reopt)[s[0]][s[s.size()-1]].W = (*reopt)[s[0]][s[s.size()-3]].W + (*reopt)[s[s.size()-2]][s[s.size()-1]].W;
+    (*reopt)[s[0]][s[s.size()-1]].T = (*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T;
+    (*reopt)[s[0]][s[s.size()-1]].C = (*reopt)[s[0]][s[s.size()-3]].C + (*reopt)[s[s.size()-2]][s[s.size()-1]].W*((*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T) + (*reopt)[s[s.size()-2]][s[s.size()-1]].C;
 }
 
 vector<vector<ReoptData>> calcReopt(vector<int> s){
@@ -158,7 +159,7 @@ vector<vector<ReoptData>> calcReopt(vector<int> s){
     }
 
     //Reverse (for 2opt)
-    for(int i = 1; i < s.size(); i++)
+    for(int i = 1; i < s.size()-1; i++)
     {
         for(int j = 1; j < i; j++)
         {
@@ -180,9 +181,9 @@ vector<vector<ReoptData>> calcReopt(vector<int> s){
         }
     }
 
-    reopt[s[0]][s[s.size()-1]].W = s.size();
-    reopt[s[0]][s[s.size()-1]].T = reopt[s[0]][s[s.size()-2]].T + reopt[s[s.size()-2]][s[s.size()-1]].T;
-    reopt[s[0]][s[s.size()-1]].C = reopt[0][s.size()-2].C + reopt[s[0]][s.size()-2].T + reopt[s.size()-2][s.size()-1].T;
+    reopt[s[0]][s[s.size()-1]].W = reopt[s[0]][s[s.size()-3]].W + reopt[s[s.size()-2]][s[s.size()-1]].W;
+    reopt[s[0]][s[s.size()-1]].T = reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T + reopt[s[s.size()-2]][s[s.size()-1]].T;
+    reopt[s[0]][s[s.size()-1]].C = reopt[s[0]][s[s.size()-3]].C + reopt[s[s.size()-2]][s[s.size()-1]].W*(reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T) + reopt[s[s.size()-2]][s[s.size()-1]].C;
 
     return reopt;
 }
