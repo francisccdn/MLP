@@ -211,7 +211,7 @@ ReoptData concatCost(vector<vector<ReoptData>> reopt, ReoptData sq1, int v, int 
 }
 
 vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
-    int best_i = 0, best_j = 0;
+    int    best_i = 0, best_j = 0;
     double bestDelta = 0, delta = 0;
     double preMoveCost = (*reopt)[s[0]][s[s.size()-1]].C;
     ReoptData sq[3];
@@ -229,13 +229,13 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
             if(i == j - 1){ // If they're adjacent
                 sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
                 sq[1] = concatCost(*reopt, sq[0], s[j], s[i], s[i]);
-                cost = concatCost(*reopt, sq[1], s[i], s[j+1], s[s.size()-1]);
+                cost  = concatCost(*reopt, sq[1], s[i], s[j+1], s[s.size()-1]);
                 //reopt[0][i-1] o reopt[j][j] o reopt[i][i] o reopt[j+1][dimension]
             }else{
                 sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
                 sq[1] = concatCost(*reopt, sq[0], s[j], s[i+1], s[j-1]);
                 sq[2] = concatCost(*reopt, sq[1], s[j-1], s[i], s[i]);
-                cost = concatCost(*reopt, sq[2], s[i], s[j+1], s[s.size()-1]);
+                cost  = concatCost(*reopt, sq[2], s[i], s[j+1], s[s.size()-1]);
                 //reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
             }
 
@@ -359,6 +359,8 @@ vector<int> RVND (vector<int> s, double *mainCost){
 
     vector<vector<ReoptData>> costs = calcReopt(s);
 
+    int i = 0; //DEBUG
+
     while(!ngbhList.empty())
     {
         ngbh_n = ngbhList[rand() % ngbhList.size()];
@@ -382,6 +384,8 @@ vector<int> RVND (vector<int> s, double *mainCost){
         }
 
         if(improved){
+            cout << "loop #" << i << '\t' << (*mainCost) << endl; //DEBUG
+
             s = neighbour_s;
             *mainCost = costs[s[0]][s[s.size()-1]].C;
             improved = false;
@@ -389,8 +393,11 @@ vector<int> RVND (vector<int> s, double *mainCost){
             ngbhList = {N1/*, N2, N3, N4, N5*/};
             //Reopt update is done in movement functions
         }else{
+            cout << "loop #" << i << '\t' << "!IMPROVED" << endl; //DEBUG
             ngbhList.erase(std::remove(ngbhList.begin(), ngbhList.end(), ngbh_n), ngbhList.end());
         }
+
+        i++; //DEBUG
     }
 
     return s;
@@ -496,3 +503,10 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+/*  ---- DEBUG NOTES ----
+improved always false
+    possible issues:
+        delta
+        concatCost
+*/
