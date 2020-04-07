@@ -76,12 +76,67 @@ double solutionCost (vector <int> s)
     cost.C = 0;
     cost.T = 0;
 
-    for(int k = i; k < j; k++){
+    for(int k = i; k < j; k++)
+    {
         cost.T += costM[s[k]][s[k+1]];
-        cost.C += costM[s[k]][s[k+1]] + cost.T; //Checar se esse calculo ta certo
+        cost.C += costM[s[k]][s[k+1]] + cost.T;
     }
 
     return cost.C;
+}
+
+double solutionCost2(vector<int> s) //DEBUG
+{
+    vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
+    
+    for(int j = 1; j < s.size(); j++)
+    {
+        for(int i = 0; i <= j; i++)
+        {
+            reopt[s[i]][s[j]].C = 0;
+            reopt[s[i]][s[j]].T = 0;
+            reopt[s[i]][s[j]].W = j - i + 1;
+
+            if(i == j)
+                continue;
+            
+
+            for(int k = i; k < j; k++)
+            {
+                reopt[s[i]][s[j]].T += costM[s[k]][s[k+1]];
+                reopt[s[i]][s[j]].C += costM[s[k]][s[k+1]] + reopt[s[i]][s[k]].T;
+            }
+        }
+    }
+
+    //Reverse (for 2opt)
+    for(int i = 1; i < s.size()-1; i++)
+    {
+        for(int j = 1; j < i; j++)
+        {
+            reopt[s[i]][s[j]].C = 0;
+            reopt[s[i]][s[j]].T = 0;
+            reopt[s[i]][s[j]].W = i - j + 1;
+
+            for(int k = i; k > j; k--)
+            {
+                reopt[s[i]][s[j]].T += costM[s[k]][s[k-1]];
+            }
+        }
+        for(int j = 1; j < i; j++)
+        {
+            for(int k = i; k > j; k--)
+            {
+                reopt[s[i]][s[j]].C += costM[s[k]][s[k-1]] + reopt[s[i]][s[k]].T;
+            }
+        }
+    }
+
+    reopt[s[0]][s[s.size()-1]].W = reopt[s[0]][s[s.size()-3]].W + reopt[s[s.size()-2]][s[s.size()-1]].W;
+    reopt[s[0]][s[s.size()-1]].T = reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T + reopt[s[s.size()-2]][s[s.size()-1]].T;
+    reopt[s[0]][s[s.size()-1]].C = reopt[s[0]][s[s.size()-3]].C + reopt[s[s.size()-2]][s[s.size()-1]].W*(reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T) + reopt[s[s.size()-2]][s[s.size()-1]].C;
+
+    return reopt[s[0]][s[s.size()-1]].C;
 }
 
 void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
@@ -98,7 +153,6 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
 
             if(i == j)
                 continue;
-            
 
             for(int k = i; k < j; k++)
             {
@@ -191,16 +245,28 @@ vector<vector<ReoptData>> calcReopt(vector<int> s){
 ReoptData concatCost(vector<vector<ReoptData>> reopt, int u, int v, int w, int x)
 { // O = (Ou, ... , Ov) and O' = (O'w, ... , O'x) are our subsequences
     ReoptData cost;
+    ReoptData reopt_u_v;
 
-    cost.T = reopt[u][v].T + reopt[v][w].T + reopt[w][x].T;
-    cost.C = reopt[u][v].C + reopt[w][x].W * (reopt[u][v].T + reopt[v][w].T) + reopt[w][x].C;
-    cost.W = reopt[u][v].W + reopt[w][x].W;
+    if(u == 1 && u == v)
+    {
+        reopt_u_v.T = 0;
+        reopt_u_v.C = 0;
+        reopt_u_v.W = 0; 
+    }
+    else
+    {
+        reopt_u_v = reopt[u][v];
+    }
+
+    cost.T = reopt_u_v.T + reopt[v][w].T + reopt[w][x].T;
+    cost.C = reopt_u_v.C + reopt[w][x].W * (reopt_u_v.T + reopt[v][w].T) + reopt[w][x].C;
+    cost.W = reopt_u_v.W + reopt[w][x].W;
 
     return cost;  
 }
 
 ReoptData concatCost(vector<vector<ReoptData>> reopt, ReoptData sq1, int v, int w, int x)
-{ // O = (Ou, ... , Ov) = sq1 and O' = (O'w, ... , O'x) = sq2 are our subsequences
+{ // O = (Ou, ... , Ov) = sq1 and O' = (O'w, ... , O'x) are our subsequences
     ReoptData cost;
 
     cost.T = sq1.T + reopt[v][w].T + reopt[w][x].T;
@@ -384,7 +450,8 @@ vector<int> RVND (vector<int> s, double *mainCost){
         }
 
         if(improved){
-            cout << "loop #" << i << '\t' << (*mainCost) << endl; //DEBUG
+            cout << "loop #" << i << '\t' << "IMPROVED" << (*mainCost) << endl; //DEBUG
+            cout << "movement: " << ngbh_n << endl; // DEBUG
 
             s = neighbour_s;
             *mainCost = costs[s[0]][s[s.size()-1]].C;
@@ -393,7 +460,9 @@ vector<int> RVND (vector<int> s, double *mainCost){
             ngbhList = {N1/*, N2, N3, N4, N5*/};
             //Reopt update is done in movement functions
         }else{
-            cout << "loop #" << i << '\t' << "!IMPROVED" << endl; //DEBUG
+            cout << "loop #" << i << '\t' << "!improved" << endl; //DEBUG
+            cout << "movement: " << ngbh_n << endl; // DEBUG
+
             ngbhList.erase(std::remove(ngbhList.begin(), ngbhList.end(), ngbh_n), ngbhList.end());
         }
 
@@ -464,15 +533,27 @@ int main(int argc, char** argv) {
     vector<int> solutionAlpha, solutionBeta, solutionOmega;
     double costAlpha, costBeta, costOmega = numeric_limits<double>::infinity();
 
+    double costAlpha2, firstCost; //DEBUG
+
     for(int i = 0; i < I_MAX; i++)
     {
         solutionAlpha = construction();
         solutionBeta = solutionAlpha;
 
         costAlpha = solutionCost(solutionAlpha);
+        costAlpha2 = solutionCost2(solutionAlpha); //DEBUG
+        
+        if(i == 0){ //DEBUG
+            firstCost = costAlpha;
+        }
+
         costBeta = costAlpha;
 
         for(int iterILS = 0; iterILS < I_ILS; iterILS++){
+
+            cout << "Iter " << i << " of " << I_MAX << endl; //DEBUG
+            cout << "IterILS " << iterILS << " of " << I_ILS << endl; //DEBUG
+
             solutionAlpha = RVND(solutionAlpha, &costAlpha);
 
             if(costAlpha < costBeta){
@@ -500,13 +581,9 @@ int main(int argc, char** argv) {
     }
     std::cout << "\n\n" << "COST: " << costOmega << "\n";
     std::cout << "TIME: " << elapsedSeconds.count() << "\n";
+    if(costOmega == firstCost){
+        cout << "Solution never changed" << endl;
+    }
 
     return 0;
 }
-
-/*  ---- DEBUG NOTES ----
-improved always false
-    possible issues:
-        delta
-        concatCost
-*/
