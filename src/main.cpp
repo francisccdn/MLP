@@ -87,7 +87,7 @@ double solutionCost (vector <int> s)
 
 double solutionCost2(vector<int> s) //DEBUG
 {
-    vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
+        vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
     
     for(int j = 1; j < s.size(); j++)
     {
@@ -95,7 +95,8 @@ double solutionCost2(vector<int> s) //DEBUG
         {
             reopt[s[i]][s[j]].C = 0;
             reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = j - i + 1;
+            reopt[s[i]][s[j]].W = (i == 0) ? j-i : j-i+1;
+            //reopt[s[i]][s[j]].W = (i == j) ? 1 : j-i;
 
             if(i == j)
                 continue;
@@ -116,7 +117,7 @@ double solutionCost2(vector<int> s) //DEBUG
         {
             reopt[s[i]][s[j]].C = 0;
             reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = i - j + 1;
+            reopt[s[i]][s[j]].W = (i == 0) ? i-j : i-j+1;
 
             for(int k = i; k > j; k--)
             {
@@ -149,7 +150,8 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
         {
             (*reopt)[s[i]][s[j]].C = 0;
             (*reopt)[s[i]][s[j]].T = 0;
-            (*reopt)[s[i]][s[j]].W = j - i + 1;
+            (*reopt)[s[i]][s[j]].W = (i == 0) ? j-i : j-i+1;
+            //(*reopt)[s[i]][s[j]].W = (i == j) ? 1 : j-i;
 
             if(i == j)
                 continue;
@@ -169,7 +171,7 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
         {
             (*reopt)[s[i]][s[j]].C = 0;
             (*reopt)[s[i]][s[j]].T = 0;
-            (*reopt)[s[i]][s[j]].W = i - j + 1;
+            (*reopt)[s[i]][s[j]].W = (i == 0) ? i-j : i-j+1;
 
             for(int k = i, l = j; l < i; k--, l++)
             {
@@ -198,7 +200,8 @@ vector<vector<ReoptData>> calcReopt(vector<int> s){
         {
             reopt[s[i]][s[j]].C = 0;
             reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = j - i + 1;
+            reopt[s[i]][s[j]].W = (i == 0) ? j-i : j-i+1;
+            //reopt[s[i]][s[j]].W = (i == j) ? 1 : j-i;
 
             if(i == j)
                 continue;
@@ -219,7 +222,7 @@ vector<vector<ReoptData>> calcReopt(vector<int> s){
         {
             reopt[s[i]][s[j]].C = 0;
             reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = i - j + 1;
+            reopt[s[i]][s[j]].W = (i == 0) ? i-j : i-j+1;
 
             for(int k = i; k > j; k--)
             {
@@ -251,7 +254,7 @@ ReoptData concatCost(vector<vector<ReoptData>> reopt, int u, int v, int w, int x
     {
         reopt_u_v.T = 0;
         reopt_u_v.C = 0;
-        reopt_u_v.W = 0; 
+        reopt_u_v.W = 0; // pode ser 1
     }
     else
     {
@@ -282,7 +285,6 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
     double preMoveCost = (*reopt)[s[0]][s[s.size()-1]].C;
     ReoptData sq[3];
     ReoptData cost;
-    
 
     for(int j = 2; j < s.size() - 1; j++)
     {
@@ -450,12 +452,12 @@ vector<int> RVND (vector<int> s, double *mainCost){
         }
 
         if(improved){
-            cout << "loop #" << i << '\t' << "IMPROVED" << (*mainCost) << endl; //DEBUG
-            cout << "movement: " << ngbh_n << endl; // DEBUG
-
             s = neighbour_s;
             *mainCost = costs[s[0]][s[s.size()-1]].C;
             improved = false;
+
+            cout << "loop #" << i << '\t' << "IMPROVED " << (*mainCost) << endl; //DEBUG
+            cout << "movement: " << ngbh_n << endl; // DEBUG
 
             ngbhList = {N1/*, N2, N3, N4, N5*/};
             //Reopt update is done in movement functions
@@ -540,8 +542,8 @@ int main(int argc, char** argv) {
         solutionAlpha = construction();
         solutionBeta = solutionAlpha;
 
-        costAlpha = solutionCost(solutionAlpha);
-        costAlpha2 = solutionCost2(solutionAlpha); //DEBUG
+        costAlpha2 = solutionCost(solutionAlpha);
+        costAlpha = solutionCost2(solutionAlpha); //DEBUG
         
         if(i == 0){ //DEBUG
             firstCost = costAlpha;
