@@ -87,62 +87,17 @@ double solutionCost (vector <int> s)
 
 double solutionCost2(vector<int> s) //DEBUG
 {
-        vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
-    
-    for(int j = 1; j < s.size(); j++)
-    {
-        for(int i = 0; i <= j; i++)
-        {
-            reopt[s[i]][s[j]].C = 0;
-            reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = (s[i] == 1) ? j-i : j-i+1;
-            //reopt[s[i]][s[j]].W = (i == j) ? 1 : j-i;          
-
-            for(int k = i; k < j; k++)
-            {
-                reopt[s[i]][s[j]].T += costM[s[k]][s[k+1]];
-                reopt[s[i]][s[j]].C += costM[s[k]][s[k+1]] + reopt[s[i]][s[k]].T;
-            }
-        }
-    }
-
-    //Reverse (for 2opt)
-    for(int i = 1; i < s.size()-1; i++)
-    {
-        for(int j = 1; j < i; j++)
-        {
-            reopt[s[i]][s[j]].C = 0;
-            reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = (s[i] == 1) ? i-j : i-j+1;
-
-            for(int k = i; k > j; k--)
-            {
-                reopt[s[i]][s[j]].T += costM[s[k]][s[k-1]];
-            }
-        }
-        for(int j = 1; j < i; j++)
-        {
-            for(int k = i; k > j; k--)
-            {
-                reopt[s[i]][s[j]].C += costM[s[k]][s[k-1]] + reopt[s[i]][s[k]].T;
-            }
-        }
-    }
-
-    reopt[0][0].W = reopt[s[0]][s[s.size()-3]].W + reopt[s[s.size()-2]][s[s.size()-1]].W;
-    reopt[0][0].T = reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T + reopt[s[s.size()-2]][s[s.size()-1]].T;
-    reopt[0][0].C = reopt[s[0]][s[s.size()-3]].C + reopt[s[s.size()-2]][s[s.size()-1]].W*(reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T) + reopt[s[s.size()-2]][s[s.size()-1]].C;
-
+    vector<vector<ReoptData>> reopt = calcReopt(s);
     return reopt[0][0].C;
 }
 
 void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
 {
-    int small = (ii <= jj)? ii : jj;
+    int begin = (ii <= jj)? ii : jj;
     
-    for(int j = small; j < s.size(); j++)
+    for(int j = begin-1; j < s.size(); j++)
     {
-        for(int i = small; i <= j; i++)
+        for(int i = begin-1; i <= j; i++)
         {
             (*reopt)[s[i]][s[j]].C = 0;
             (*reopt)[s[i]][s[j]].T = 0;
@@ -158,9 +113,9 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
     }
 
     //Reverse (for 2opt)
-    for(int i = small; i < s.size()-1; i++)
+    for(int i = begin; i < s.size()-1; i++)
     {
-        for(int j = small; j < i; j++)
+        for(int j = begin; j < i; j++)
         {
             (*reopt)[s[i]][s[j]].C = 0;
             (*reopt)[s[i]][s[j]].T = 0;
@@ -171,7 +126,7 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
                 (*reopt)[s[i]][s[j]].T += costM[s[k]][s[k-1]];
             }
         }
-        for(int j = small; j < i; j++)
+        for(int j = begin; j < i; j++)
         {
             for(int k = i, l = j; l < i; k--, l++){
                 (*reopt)[s[i]][s[j]].C += costM[s[k]][s[k-1]] + (*reopt)[s[i]][s[j]].T;
@@ -184,53 +139,10 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
     (*reopt)[0][0].C = (*reopt)[s[0]][s[s.size()-3]].C + (*reopt)[s[s.size()-2]][s[s.size()-1]].W*((*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T) + (*reopt)[s[s.size()-2]][s[s.size()-1]].C;
 }
 
-vector<vector<ReoptData>> calcReopt(vector<int> s){
+vector<vector<ReoptData>> calcReopt(vector<int> s)
+{
     vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
-    
-    for(int j = 1; j < s.size(); j++)
-    {
-        for(int i = 0; i <= j; i++)
-        {
-            reopt[s[i]][s[j]].C = 0;
-            reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = (s[i] == 1) ? j-i : j-i+1;
-            //reopt[s[i]][s[j]].W = (i == j) ? 1 : j-i;
-
-            for(int k = i; k < j; k++)
-            {
-                reopt[s[i]][s[j]].T += costM[s[k]][s[k+1]];
-                reopt[s[i]][s[j]].C += costM[s[k]][s[k+1]] + reopt[s[i]][s[k]].T;
-            }
-        }
-    }
-
-    //Reverse (for 2opt)
-    for(int i = 1; i < s.size()-1; i++)
-    {
-        for(int j = 1; j < i; j++)
-        {
-            reopt[s[i]][s[j]].C = 0;
-            reopt[s[i]][s[j]].T = 0;
-            reopt[s[i]][s[j]].W = (s[i] == 1) ? i-j : i-j+1;
-     
-            for(int k = i; k > j; k--)
-            {
-                reopt[s[i]][s[j]].T += costM[s[k]][s[k-1]];
-            }
-        }
-        for(int j = 1; j < i; j++)
-        {
-            for(int k = i; k > j; k--)
-            {
-                reopt[s[i]][s[j]].C += costM[s[k]][s[k-1]] + reopt[s[i]][s[k]].T;
-            }
-        }
-    }
-
-    reopt[0][0].W = reopt[s[0]][s[s.size()-3]].W + reopt[s[s.size()-2]][s[s.size()-1]].W;
-    reopt[0][0].T = reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T + reopt[s[s.size()-2]][s[s.size()-1]].T;
-    reopt[0][0].C = reopt[s[0]][s[s.size()-3]].C + reopt[s[s.size()-2]][s[s.size()-1]].W*(reopt[s[0]][s[s.size()-3]].T + reopt[s[s.size()-3]][s[s.size()-2]].T) + reopt[s[s.size()-2]][s[s.size()-1]].C;
-
+    calcReopt(s, &reopt, 1, 1);
     return reopt;
 }
 
@@ -250,7 +162,7 @@ ReoptData concatCost(vector<vector<ReoptData>> reopt, ReoptData sq1, int v, int 
     ReoptData cost;
     int reopt_w_x_W = reopt[w][x].W;
     if(w == 1 && x == 1)
-        reopt_w_x_W = 1;
+        reopt_w_x_W = 1; // Force reopt[1][1] = 1, as here 1 always comes from s[last]
 
     cost.T = sq1.T + reopt[v][w].T + reopt[w][x].T;
     cost.C = sq1.C + reopt_w_x_W * (sq1.T + reopt[v][w].T) + reopt[w][x].C;
