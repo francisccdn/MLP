@@ -70,24 +70,31 @@ vector<int> construction()
 
 double solutionCost (vector <int> s)
 {
-    ReoptData cost;
-    const int i = 0, j = s.size();
-
-    cost.C = 0;
-    cost.T = 0;
-
-    for(int k = i; k < j; k++)
+    vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
+    
+    // First assign value of individual elements
+    for(int i = 0; i < s.size(); i++)
     {
-        cost.T += costM[s[k]][s[k+1]];
-        cost.C += costM[s[k]][s[k+1]] + cost.T;
+        reopt[s[i]][s[i]].W = 1;
+        reopt[s[i]][s[i]].T = 0;
+        reopt[s[i]][s[i]].C = 0;    
+    }
+    reopt[s[0]][s[0]].W = 0; // Deposit has W = 0
+
+    // Perform concatenation of [0][i-1] + [i][i] from 0 till end of s
+    for(int i = 0; i < s.size(); i++)
+    {
+        reopt[s[0]][s[i]].W = reopt[s[0]][s[i-1]].W + reopt[s[i]][s[i]].W;
+        reopt[s[0]][s[i]].T = reopt[s[0]][s[i-1]].T + costM[s[i-1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
+        reopt[s[0]][s[i]].C = reopt[s[0]][s[i-1]].C + reopt[s[i]][s[i]].W*(reopt[s[0]][s[i-1]].T+costM[s[i-1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
     }
 
-    return cost.C;
-}
+    const int v = s.size()-2, w = s.size()-1;
 
-double solutionCost2(vector<int> s) //DEBUG
-{
-    vector<vector<ReoptData>> reopt = calcReopt(s);
+    reopt[0][0].W = reopt[s[0]][s[v]].W + 1/*== reopt[s[w]][s[w]].W*/;
+    reopt[0][0].T = reopt[s[0]][s[v]].T + costM[s[v]][s[w]] /*+reopt[s[w]][s[w]].T(==0)*/;
+    reopt[0][0].C = reopt[s[0]][s[v]].C + /*reopt[s[w]][s[w]].W==*/1 * (reopt[s[0]][s[v]].T+costM[s[v]][s[w]]) /*+reopt[s[w]][s[w]].C(==0)*/; 
+
     return reopt[0][0].C;
 }
 
@@ -95,42 +102,34 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
 {
     int begin = (ii <= jj)? ii : jj;
     
-    for(int j = begin-1; j < s.size(); j++)
+    // First assign value of individual elements
+    for(int i = begin; i < s.size(); i++)
     {
-        for(int i = begin-1; i <= j; i++)
-        {
-            (*reopt)[s[i]][s[j]].C = 0;
-            (*reopt)[s[i]][s[j]].T = 0;
-            (*reopt)[s[i]][s[j]].W = (s[i] == 1) ? j-i : j-i+1;
-            //(*reopt)[s[i]][s[j]].W = (i == j) ? 1 : j-i;
+        (*reopt)[s[i]][s[i]].W = 1;
+        (*reopt)[s[i]][s[i]].T = 0;
+        (*reopt)[s[i]][s[i]].C = 0;    
+    }
+    (*reopt)[s[0]][s[0]].W = 0; // Deposit has W = 0
 
-            for(int k = i; k < j; k++)
-            {
-                (*reopt)[s[i]][s[j]].T += costM[s[k]][s[k+1]];
-                (*reopt)[s[i]][s[j]].C += costM[s[k]][s[k+1]] + (*reopt)[s[i]][s[k]].T;
-            }
+    // Perform concatenation of [i][j-1] + [j][j] from begin till end of s
+    for(int j = begin; j < s.size(); j++)
+    {
+        for(int i = begin; i < j; i++)
+        {
+            (*reopt)[s[i]][s[j]].W = (*reopt)[s[i]][s[j-1]].W + (*reopt)[s[j]][s[j]].W;
+            (*reopt)[s[i]][s[j]].T = (*reopt)[s[i]][s[j-1]].T + costM[s[j-1]][s[j]] /*+reopt[s[j]][s[j]].T(==0)*/;
+            (*reopt)[s[i]][s[j]].C = (*reopt)[s[i]][s[j-1]].C + (*reopt)[s[j]][s[j]].W*((*reopt)[s[i]][s[j-1]].T+costM[s[j-1]][s[j]]) /*+reopt[s[j]][s[j]].C(==0)*/; 
         }
     }
 
-    //Reverse (for 2opt)
-    for(int i = begin; i < s.size()-1; i++)
+    // Concatenate in reverse direction
+    for(int i = s.size()-1; begin < i; i--)
     {
-        for(int j = begin; j < i; j++)
+        for(int j = s.size()-1; i < j; j--)
         {
-            (*reopt)[s[i]][s[j]].C = 0;
-            (*reopt)[s[i]][s[j]].T = 0;
-            (*reopt)[s[i]][s[j]].W = (s[i] == 1) ? i-j : i-j+1;
-
-            for(int k = i, l = j; l < i; k--, l++)
-            {
-                (*reopt)[s[i]][s[j]].T += costM[s[k]][s[k-1]];
-            }
-        }
-        for(int j = begin; j < i; j++)
-        {
-            for(int k = i, l = j; l < i; k--, l++){
-                (*reopt)[s[i]][s[j]].C += costM[s[k]][s[k-1]] + (*reopt)[s[i]][s[j]].T;
-            }
+            (*reopt)[s[i]][s[j]].W = (*reopt)[s[j]][s[i+1]].W + (*reopt)[s[i]][s[i]].W;
+            (*reopt)[s[i]][s[j]].T = (*reopt)[s[j]][s[i+1]].T + costM[s[i+1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
+            (*reopt)[s[i]][s[j]].C = (*reopt)[s[j]][s[i+1]].C + (*reopt)[s[i]][s[i]].W*((*reopt)[s[j]][s[i+1]].T+costM[s[i+1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
         }
     }
 
@@ -144,6 +143,12 @@ vector<vector<ReoptData>> calcReopt(vector<int> s)
     vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
     calcReopt(s, &reopt, 1, 1);
     return reopt;
+}
+
+double solutionCost2(vector<int> s) //DEBUG
+{
+    vector<vector<ReoptData>> reopt = calcReopt(s);
+    return reopt[0][0].C;
 }
 
 ReoptData concatCost(vector<vector<ReoptData>> reopt, int u, int v, int w, int x)
@@ -439,8 +444,8 @@ int main(int argc, char** argv) {
         solutionAlpha = construction();
         solutionBeta = solutionAlpha;
 
-        costAlpha2 = solutionCost(solutionAlpha);
-        costAlpha = solutionCost2(solutionAlpha); //DEBUG
+        costAlpha = solutionCost(solutionAlpha);
+        costAlpha2 = solutionCost2(solutionAlpha); //DEBUG
         
         if(i == 0){ //DEBUG
             firstCost = costAlpha;
