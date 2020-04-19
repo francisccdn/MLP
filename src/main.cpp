@@ -82,7 +82,7 @@ double solutionCost (vector <int> s)
     reopt[s[0]][s[0]].W = 0; // Deposit has W = 0
 
     // Perform concatenation of [0][i-1] + [i][i] from 0 till end of s
-    for(int i = 0; i < s.size(); i++)
+    for(int i = 0; i < s.size()-1; i++)
     {
         reopt[s[0]][s[i]].W = reopt[s[0]][s[i-1]].W + reopt[s[i]][s[i]].W;
         reopt[s[0]][s[i]].T = reopt[s[0]][s[i-1]].T + costM[s[i-1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
@@ -91,9 +91,9 @@ double solutionCost (vector <int> s)
 
     const int v = s.size()-2, w = s.size()-1;
 
-    reopt[0][0].W = reopt[s[0]][s[v]].W + 1/*== reopt[s[w]][s[w]].W*/;
+    reopt[0][0].W = reopt[s[0]][s[v]].W + reopt[s[w]][s[w]].W;
     reopt[0][0].T = reopt[s[0]][s[v]].T + costM[s[v]][s[w]] /*+reopt[s[w]][s[w]].T(==0)*/;
-    reopt[0][0].C = reopt[s[0]][s[v]].C + /*reopt[s[w]][s[w]].W==*/1 * (reopt[s[0]][s[v]].T+costM[s[v]][s[w]]) /*+reopt[s[w]][s[w]].C(==0)*/; 
+    reopt[0][0].C = reopt[s[0]][s[v]].C + reopt[s[w]][s[w]].W * (reopt[s[0]][s[v]].T+costM[s[v]][s[w]]) /*+reopt[s[w]][s[w]].C(==0)*/; 
 
     return reopt[0][0].C;
 }
@@ -116,64 +116,38 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
     {
         for(int i = begin; i < j; i++)
         {
+            if(s[i] == s[j]) continue;
+
             (*reopt)[s[i]][s[j]].W = (*reopt)[s[i]][s[j-1]].W + (*reopt)[s[j]][s[j]].W;
+
+            //cout << "(i, j) = (" << i << ", " << j << ") - " << (*reopt)[s[i]][s[j]].W << endl; //DEBUG
+             
             (*reopt)[s[i]][s[j]].T = (*reopt)[s[i]][s[j-1]].T + costM[s[j-1]][s[j]] /*+reopt[s[j]][s[j]].T(==0)*/;
             (*reopt)[s[i]][s[j]].C = (*reopt)[s[i]][s[j-1]].C + (*reopt)[s[j]][s[j]].W*((*reopt)[s[i]][s[j-1]].T+costM[s[j-1]][s[j]]) /*+reopt[s[j]][s[j]].C(==0)*/; 
         }
     }
 
     // Concatenate in reverse direction
-    for(int i = s.size()-1; begin < i; i--)
-    {
-        for(int j = s.size()-1; i < j; j--)
-        {
-            (*reopt)[s[i]][s[j]].W = (*reopt)[s[j]][s[i+1]].W + (*reopt)[s[i]][s[i]].W;
-            (*reopt)[s[i]][s[j]].T = (*reopt)[s[j]][s[i+1]].T + costM[s[i+1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
-            (*reopt)[s[i]][s[j]].C = (*reopt)[s[j]][s[i+1]].C + (*reopt)[s[i]][s[i]].W*((*reopt)[s[j]][s[i+1]].T+costM[s[i+1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
-        }
-    }
+    //for(int i = s.size()-1; begin < i; i--)
+    //{
+    //    for(int j = s.size()-1; i < j; j--)
+    //    {
+    //        (*reopt)[s[i]][s[j]].W = (*reopt)[s[j]][s[i+1]].W + (*reopt)[s[i]][s[i]].W;
+    //        (*reopt)[s[i]][s[j]].T = (*reopt)[s[j]][s[i+1]].T + costM[s[i+1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
+    //        (*reopt)[s[i]][s[j]].C = (*reopt)[s[j]][s[i+1]].C + (*reopt)[s[i]][s[i]].W*((*reopt)[s[j]][s[i+1]].T+costM[s[i+1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
+    //    }
+    //}
 
     (*reopt)[0][0].W = (*reopt)[s[0]][s[s.size()-3]].W + (*reopt)[s[s.size()-2]][s[s.size()-1]].W;
-    (*reopt)[0][0].T = (*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T;
-    (*reopt)[0][0].C = (*reopt)[s[0]][s[s.size()-3]].C + (*reopt)[s[s.size()-2]][s[s.size()-1]].W*((*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T) + (*reopt)[s[s.size()-2]][s[s.size()-1]].C;
+    (*reopt)[0][0].T = (*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-3]][s[s.size()-2]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T;
+    (*reopt)[0][0].C = (*reopt)[s[0]][s[s.size()-3]].C + (*reopt)[s[s.size()-2]][s[s.size()-1]].W * ((*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-3]][s[s.size()-2]].T) + (*reopt)[s[s.size()-2]][s[s.size()-1]].C;
 }
 
 vector<vector<ReoptData>> calcReopt(vector<int> s)
 {
     vector<vector<ReoptData>> reopt(s.size(), vector<ReoptData>(s.size()));
-    calcReopt(s, &reopt, 1, 1);
+    calcReopt(s, &reopt, 0, 0);
     return reopt;
-}
-
-double solutionCost2(vector<int> s) //DEBUG
-{
-    vector<vector<ReoptData>> reopt = calcReopt(s);
-    return reopt[0][0].C;
-}
-
-ReoptData concatCost(vector<vector<ReoptData>> reopt, int u, int v, int w, int x)
-{ // O = (Ou, ... , Ov) and O' = (O'w, ... , O'x) are our subsequences
-    ReoptData cost;
-
-    cost.T = reopt[u][v].T + reopt[v][w].T + reopt[w][x].T;
-    cost.C = reopt[u][v].C + reopt[w][x].W * (reopt[u][v].T + reopt[v][w].T) + reopt[w][x].C;
-    cost.W = reopt[u][v].W + reopt[w][x].W;
-
-    return cost;  
-}
-
-ReoptData concatCost(vector<vector<ReoptData>> reopt, ReoptData sq1, int v, int w, int x)
-{ // O = (Ou, ... , Ov) = sq1 and O' = (O'w, ... , O'x) are our subsequences
-    ReoptData cost;
-    int reopt_w_x_W = reopt[w][x].W;
-    if(w == 1 && x == 1)
-        reopt_w_x_W = 1; // Force reopt[1][1] = 1, as here 1 always comes from s[last]
-
-    cost.T = sq1.T + reopt[v][w].T + reopt[w][x].T;
-    cost.C = sq1.C + reopt_w_x_W * (sq1.T + reopt[v][w].T) + reopt[w][x].C;
-    cost.W = sq1.W + reopt_w_x_W;
-
-    return cost;  
 }
 
 vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
@@ -187,26 +161,37 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
     {
         for(int i = 1; i < j; i++)
         {
-            cost.C = 0;
-            cost.T = 0;
-            cost.W = 0;
-
             if(i == j - 1){ // If they're adjacent
-                sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
-                sq[1] = concatCost(*reopt, sq[0], s[j], s[i], s[i]);
-                cost  = concatCost(*reopt, sq[1], s[i], s[j+1], s[s.size()-1]);
+                sq[0].W = (*reopt)[s[0]][s[i-1]].W + (*reopt)[s[j]][s[j]].W;
+                sq[1].W = sq[0].W + (*reopt)[s[i]][s[i]].W;
+                cost.W = sq[1].W + (*reopt)[s[j+1]][s[s.size()-1]].W;
+                
+                sq[0].T = (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T + (*reopt)[s[j]][s[j]].T;
+                sq[1].T = sq[0].T + (*reopt)[s[j]][s[i]].T + (*reopt)[s[i]][s[i]].T;
+                cost.T = sq[1].T + (*reopt)[s[i]][s[j+1]].T + (*reopt)[s[j+1]][s[s.size()-1]].T;
+
+                sq[0].C = (*reopt)[s[0]][s[i-1]].C + (*reopt)[s[j]][s[j]].W * ( (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T ) + (*reopt)[s[j]][s[j]].C;
+                sq[1].C = sq[0].C + (*reopt)[s[i]][s[i]].W * ( sq[0].T + (*reopt)[s[j]][s[i]].T ) + (*reopt)[s[i]][s[i]].C;
+                cost.C = sq[1].C + (*reopt)[s[j+1]][s[s.size()-1]].W * ( sq[1].T + (*reopt)[s[i]][s[j+1]].T ) + (*reopt)[s[j+1]][s[s.size()-1]].C;
+
                 //reopt[0][i-1] o reopt[j][j] o reopt[i][i] o reopt[j+1][dimension]
             }else{
-                sq[0] = concatCost(*reopt, s[0], s[i-1], s[j], s[j]);
-                sq[1] = concatCost(*reopt, sq[0], s[j], s[i+1], s[j-1]);
-                sq[2] = concatCost(*reopt, sq[1], s[j-1], s[i], s[i]);
-                cost  = concatCost(*reopt, sq[2], s[i], s[j+1], s[s.size()-1]);
-                //reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
-            }
+                sq[0].W = (*reopt)[s[0]][s[i-1]].W + (*reopt)[s[j]][s[j]].W;
+                sq[1].W = sq[0].W + (*reopt)[s[i+1]][s[j-1]].W;
+                sq[2].W = sq[1].W + (*reopt)[s[i]][s[i]].W;
+                cost.W = sq[2].W + (*reopt)[s[j+1]][s[s.size()-1]].W;
+                
+                sq[0].T = (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T + (*reopt)[s[j]][s[j]].T;
+                sq[1].T = sq[0].T + (*reopt)[s[j]][s[i+1]].T + (*reopt)[s[i+1]][s[j-1]].T;
+                sq[2].T = sq[1].T + (*reopt)[s[j-1]][s[i]].T + (*reopt)[s[i]][s[i]].T;
+                cost.T = sq[2].T + (*reopt)[s[i]][s[j+1]].T + (*reopt)[s[j+1]][s[s.size()-1]].T;
 
-            if(i == 47 && j == 51) //DEBUG
-            {
-                int a = i + j;
+                sq[0].C = (*reopt)[s[0]][s[i-1]].C + (*reopt)[s[j]][s[j]].W * ( (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T ) + (*reopt)[s[j]][s[j]].C;
+                sq[1].C = sq[0].C + (*reopt)[s[i+1]][s[j-1]].W * ( sq[0].T + (*reopt)[s[j]][s[i+1]].T ) + (*reopt)[s[i+1]][s[j-1]].C;
+                sq[2].C = sq[1].C + (*reopt)[s[i]][s[i]].W * ( sq[1].T + (*reopt)[s[j-1]][s[i]].T ) + (*reopt)[s[i]][s[j]].C;
+                cost.C = sq[2].C + (*reopt)[s[j+1]][s[s.size()-1]].W * ( sq[2].T + (*reopt)[s[i]][s[j+1]].T ) + (*reopt)[s[j+1]][s[s.size()-1]].C;
+
+                //reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
             }
 
             delta = cost.C - preMoveCost;
@@ -229,7 +214,7 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
     return s;
 }
 
-vector<int> flip (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
+/* vector<int> flip (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
     int best_i = 0, best_j = 0;
     double bestDelta = 0, delta = 0;
     double preMoveCost = (*reopt)[0][0].C;
@@ -318,7 +303,7 @@ vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> *reopt, bool *
     }
 
     return s;
-}
+} */
 
 vector<int> RVND (vector<int> s, double *mainCost){
     vector<int> ngbhList = {N1/*, N2, N3, N4, N5*/};
@@ -339,7 +324,7 @@ vector<int> RVND (vector<int> s, double *mainCost){
             case N1:
                 neighbour_s = swap(s, &costs, &improved);
                 break;
-            case N2:
+            /* case N2:
                 neighbour_s = flip(s, &costs, &improved);
                 break;
             case N3:
@@ -350,7 +335,7 @@ vector<int> RVND (vector<int> s, double *mainCost){
                 break;
             case N5:
                 neighbour_s = reinsertion(s, &costs, &improved, 3);
-                break;
+                break; */
         }
 
         if(improved){
@@ -445,7 +430,6 @@ int main(int argc, char** argv) {
         solutionBeta = solutionAlpha;
 
         costAlpha = solutionCost(solutionAlpha);
-        costAlpha2 = solutionCost2(solutionAlpha); //DEBUG
         
         if(i == 0){ //DEBUG
             firstCost = costAlpha;
