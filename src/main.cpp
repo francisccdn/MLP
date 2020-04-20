@@ -225,8 +225,15 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
     {
         for(int i = 1; i < j - 1; i++)
         {
-            sq = concatCost(*reopt, s[0], s[i-1], s[j], s[i]);
-            cost = concatCost(*reopt, sq, s[i], s[j+1], s[s.size()-1]);
+            sq.W = (*reopt)[s[0]][s[i-1]].W + (*reopt)[s[j]][s[i]].W;
+            cost.W = sq.W + (*reopt)[s[j+1]][s[s.size()-1]].W;
+            
+            sq.T = (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T + (*reopt)[s[j]][s[i]].T;
+            cost.T = sq[1].T + (*reopt)[s[i]][s[j+1]].T + (*reopt)[s[j+1]][s[s.size()-1]].T;
+
+            sq.C = (*reopt)[s[0]][s[i-1]].C + (*reopt)[s[j]][s[i]].W * ( (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T ) + (*reopt)[s[j]][s[i]].C;
+            cost.C = sq.C + (*reopt)[s[j+1]][s[s.size()-1]].W * ( sq.T + (*reopt)[s[i]][s[j+1]].T ) + (*reopt)[s[j+1]][s[s.size()-1]].C;
+
             //reopt[0][i-1] o reopt[j][i] o reopt[j+1][dimension]
             
             delta = cost.C - preMoveCost;
@@ -263,15 +270,31 @@ vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> *reopt, bool *
             if(i <= j && j <= i + subsegSize) continue;
 
             if(i < j){
-                sq[0] = concatCost(*reopt, s[0], s[i-1], s[i+subsegSize], s[j-1]);
-                sq[1] = concatCost(*reopt, sq[0], s[j-1], s[i], s[i+subsegSize-1]);
-                cost = concatCost(*reopt, sq[1], s[i+subsegSize-1], s[j], s[s.size()-1]);
+                sq[0].W = (*reopt)[s[0]][s[i-1]].W + (*reopt)[s[i+subsegSize]][s[j-1]].W;
+                sq[1].W = sq[0].W + (*reopt)[s[i]][s[i+subsegSize-1]].W;
+                cost.W = sq[1].W + (*reopt)[s[j]][s[s.size()-1]].W;
+                
+                sq[0].T = (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[i+subsegSize]].T + (*reopt)[s[i+subsegSize]][s[j-1]].T;
+                sq[1].T = sq[0].T + (*reopt)[s[j-1]][s[i]].T + (*reopt)[s[i]][s[i+subsegSize-1]].T;
+                cost.T = sq[1].T + (*reopt)[s[i+subsegSize-1]][s[j]].T + (*reopt)[s[j]][s[s.size()-1]].T;
+
+                sq[0].C = (*reopt)[s[0]][s[i-1]].C + (*reopt)[s[i+subsegSize]][s[j-1]].W * ( (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[i+subsegSize]].T ) + (*reopt)[s[i+subsegSize]][s[j-1]].C;
+                sq[1].C = sq[0].C + (*reopt)[s[i]][s[i+subsegSize-1]].W * ( sq[0].T + (*reopt)[s[j-1]][s[i]].T ) + (*reopt)[s[i]][s[i+subsegSize-1]].C;
+                cost.C = sq[1].C + (*reopt)[s[j]][s[s.size()-1]].W * ( sq[1].T + (*reopt)[s[i+subsegSize-1]][s[j]].T ) + (*reopt)[s[j]][s[s.size()-1]].C;
 
                 //reopt[0][i-1] o reopt[i+subsegSize][j-1] o reopt[i][i+subsegSize-1] o reopt[j][dimension]
             }else{
-                sq[0] = concatCost(*reopt, s[0], s[j-1], s[i], s[i+subsegSize-1]);  
-                sq[1] = concatCost(*reopt, sq[0], s[i+subsegSize-1], s[j], s[i-1]);
-                cost = concatCost(*reopt, sq[1], s[i-1], s[i+subsegSize], s[s.size()-1]);
+                sq[0].W = (*reopt)[s[0]][s[j-1]].W + (*reopt)[s[i]][s[i+subsegSize-1]].W;
+                sq[1].W = sq[0].W + (*reopt)[s[j]][s[i-1]].W;
+                cost.W = sq[1].W + (*reopt)[s[i+subsegSize]][s[s.size()-1]].W;
+                
+                sq[0].T = (*reopt)[s[0]][s[j-1]].T + (*reopt)[s[j-1]][s[i]].T + (*reopt)[s[i]][s[i+subsegSize-1]].T;
+                sq[1].T = sq[0].T + (*reopt)[s[i+subsegSize-1]][s[j]].T + (*reopt)[s[j]][s[i-1]].T;
+                cost.T = sq[1].T + (*reopt)[s[i-1]][s[i+subsegSize]].T + (*reopt)[s[i+subsegSize]][s[s.size()-1]].T;
+
+                sq[0].C = (*reopt)[s[0]][s[j-1]].C + (*reopt)[s[i]][s[i+subsegSize-1]].W * ( (*reopt)[s[0]][s[j-1]].T + (*reopt)[s[j-1]][s[i]].T ) + (*reopt)[s[i]][s[i+subsegSize-1]].C;
+                sq[1].C = sq[0].C + (*reopt)[s[j]][s[i-1]].W * ( sq[0].T + (*reopt)[s[i+subsegSize-1]][s[j]].T ) + (*reopt)[s[j]][s[i-1]].C;
+                cost.C = sq[1].C + (*reopt)[s[i+subsegSize]][s[s.size()-1]].W * ( sq[1].T + (*reopt)[s[i-1]][s[i+subsegSize]].T ) + (*reopt)[s[i+subsegSize]][s[s.size()-1]].C;
 
                 //reopt[0][j-1] o reopt[i][i+subsegSize-1] o reopt[j][i-1] o reopt[i+subsegSize][dimension]
             }
