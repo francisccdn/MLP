@@ -128,15 +128,20 @@ void calcReopt(vector<int> s, vector<vector<ReoptData>> *reopt, int ii, int jj)
     }
 
     // Concatenate in reverse direction
-    //for(int i = s.size()-1; begin < i; i--)
-    //{
-    //    for(int j = s.size()-1; i < j; j--)
-    //    {
-    //        (*reopt)[s[i]][s[j]].W = (*reopt)[s[j]][s[i+1]].W + (*reopt)[s[i]][s[i]].W;
-    //        (*reopt)[s[i]][s[j]].T = (*reopt)[s[j]][s[i+1]].T + costM[s[i+1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
-    //        (*reopt)[s[i]][s[j]].C = (*reopt)[s[j]][s[i+1]].C + (*reopt)[s[i]][s[i]].W*((*reopt)[s[j]][s[i+1]].T+costM[s[i+1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
-    //    }
-    //}
+    for(int i = s.size()-2; begin < i; i--)
+    {
+        for(int j = s.size()-2; i < j; j--)
+        {
+            if(i == 0 || j == 0)
+            {
+                cout << "aqui";
+            }
+
+            (*reopt)[s[j]][s[i]].W = (*reopt)[s[j]][s[i+1]].W + (*reopt)[s[i]][s[i]].W;
+            (*reopt)[s[j]][s[i]].T = (*reopt)[s[j]][s[i+1]].T + costM[s[i+1]][s[i]] /*+reopt[s[i]][s[i]].T(==0)*/;
+            (*reopt)[s[j]][s[i]].C = (*reopt)[s[j]][s[i+1]].C + (*reopt)[s[i]][s[i]].W*((*reopt)[s[j]][s[i+1]].T+costM[s[i+1]][s[i]]) /*+reopt[s[i]][s[i]].C(==0)*/; 
+        }
+    }
 
     (*reopt)[0][0].W = (*reopt)[s[0]][s[s.size()-3]].W + (*reopt)[s[s.size()-2]][s[s.size()-1]].W;
     (*reopt)[0][0].T = (*reopt)[s[0]][s[s.size()-3]].T + (*reopt)[s[s.size()-3]][s[s.size()-2]].T + (*reopt)[s[s.size()-2]][s[s.size()-1]].T;
@@ -214,7 +219,7 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
     return s;
 }
 
-/* vector<int> flip (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
+vector<int> flip (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improved){
     int best_i = 0, best_j = 0;
     double bestDelta = 0, delta = 0;
     double preMoveCost = (*reopt)[0][0].C;
@@ -229,7 +234,7 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> *reopt, bool *improve
             cost.W = sq.W + (*reopt)[s[j+1]][s[s.size()-1]].W;
             
             sq.T = (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T + (*reopt)[s[j]][s[i]].T;
-            cost.T = sq[1].T + (*reopt)[s[i]][s[j+1]].T + (*reopt)[s[j+1]][s[s.size()-1]].T;
+            cost.T = sq.T + (*reopt)[s[i]][s[j+1]].T + (*reopt)[s[j+1]][s[s.size()-1]].T;
 
             sq.C = (*reopt)[s[0]][s[i-1]].C + (*reopt)[s[j]][s[i]].W * ( (*reopt)[s[0]][s[i-1]].T + (*reopt)[s[i-1]][s[j]].T ) + (*reopt)[s[j]][s[i]].C;
             cost.C = sq.C + (*reopt)[s[j+1]][s[s.size()-1]].W * ( sq.T + (*reopt)[s[i]][s[j+1]].T ) + (*reopt)[s[j+1]][s[s.size()-1]].C;
@@ -326,10 +331,10 @@ vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> *reopt, bool *
     }
 
     return s;
-} */
+} 
 
 vector<int> RVND (vector<int> s, double *mainCost){
-    vector<int> ngbhList = {N1/*, N2, N3, N4, N5*/};
+    vector<int> ngbhList = {N1, N2, N3, N4, N5};
     int ngbh_n;
 
     vector<int> neighbour_s = s;
@@ -347,7 +352,7 @@ vector<int> RVND (vector<int> s, double *mainCost){
             case N1:
                 neighbour_s = swap(s, &costs, &improved);
                 break;
-            /* case N2:
+            case N2:
                 neighbour_s = flip(s, &costs, &improved);
                 break;
             case N3:
@@ -358,7 +363,7 @@ vector<int> RVND (vector<int> s, double *mainCost){
                 break;
             case N5:
                 neighbour_s = reinsertion(s, &costs, &improved, 3);
-                break; */
+                break; 
         }
 
         if(improved){
@@ -369,7 +374,7 @@ vector<int> RVND (vector<int> s, double *mainCost){
             cout << "loop #" << i << '\t' << "IMPROVED " << (*mainCost) << endl; //DEBUG
             cout << "movement: " << ngbh_n << endl; // DEBUG
 
-            ngbhList = {N1/*, N2, N3, N4, N5*/};
+            ngbhList = {N1, N2, N3, N4, N5};
             //Reopt update is done in movement functions
         }else{
             cout << "loop #" << i << '\t' << "!improved" << endl; //DEBUG
