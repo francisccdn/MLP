@@ -1,7 +1,68 @@
-    // Perform concatenation of [0][i-1] + [i][i] from 0 till end of s
-    for(int i = 0; i < s.size(); i++)
+vector<int> swap (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved){
+    int    best_i = 0, best_j = 0;
+    double bestDelta = 0, delta = 0;
+    double preMoveCost = reopt[0][LAST].C;
+    ReoptData sq[3];
+    ReoptData cost;
+
+    for(int j = 2; j < LAST; j++)
     {
-        reopt[s[0]][s[i]].W = reopt[s[0]][s[i-1]].W + reopt[s[i]][s[i]].W;
-        reopt[s[0]][s[i]].T = reopt[s[0]][s[i-1]].T + costM[s[i-1]][s[i]] /*+reopt[s[i]][s[i]].T(=0)*/;
-        reopt[s[0]][s[i]].C = reopt[s[0]][s[i-1]].C + reopt[s[i]][s[i]].W*(reopt[s[0]][s[i-1]].T+costM[s[i-1]][s[i]]) /*+reopt[s[i]][s[i]].C(=0)*/; 
+        for(int i = 1; i < j; i++)
+        {
+            if(i == j - 1){ // If they're adjacent
+                sq[0].W = reopt[0][i-1].W + reopt[j][j].W;
+                sq[1].W = sq[0].W + reopt[i][i].W;
+                cost.W = sq[1].W + reopt[j+1][LAST].W;
+                
+                sq[0].T = reopt[0][i-1].T + costM[s[i-1]][s[j]] + reopt[j][j].T;
+                sq[1].T = sq[0].T + costM[s[j]][s[i]] + reopt[i][i].T;
+                cost.T = sq[1].T + costM[s[i]][s[j+1]] + reopt[j+1][LAST].T;
+
+                sq[0].C = reopt[0][i-1].C + reopt[j][j].W * ( reopt[0][i-1].T + costM[s[i-1]][s[j]] ) + reopt[j][j].C;
+                sq[1].C = sq[0].C + reopt[i][i].W * ( sq[0].T + costM[s[j]][s[i]] ) + reopt[i][i].C;
+                cost.C = sq[1].C + reopt[j+1][LAST].W * ( sq[1].T + costM[s[i]][s[j+1]] ) + reopt[j+1][LAST].C;
+
+                //reopt[0][i-1] o reopt[j][j] o reopt[i][i] o reopt[j+1][dimension]
+            }else{
+                sq[0].W = reopt[0][i-1].W + reopt[j][j].W;
+                sq[1].W = sq[0].W + reopt[i+1][j-1].W;
+                sq[2].W = sq[1].W + reopt[i][i].W;
+                cost.W = sq[2].W + reopt[j+1][LAST].W;
+                
+                sq[0].T = reopt[0][i-1].T + costM[s[i-1]][s[j]] + reopt[j][j].T;
+                sq[1].T = sq[0].T + costM[s[j]][s[i+1]] + reopt[i+1][j-1].T;
+                sq[2].T = sq[1].T + costM[s[j-1]][s[i]] + reopt[i][i].T;
+                cost.T = sq[2].T + costM[s[i]][s[j+1]] + reopt[j+1][LAST].T;
+
+                sq[0].C = reopt[0][i-1].C + reopt[j][j].W * ( reopt[0][i-1].T + costM[s[i-1]][s[j]] ) + reopt[j][j].C;
+                sq[1].C = sq[0].C + reopt[i+1][j-1].W * ( sq[0].T + costM[s[j]][s[i+1]] ) + reopt[i+1][j-1].C;
+                sq[2].C = sq[1].C + reopt[i][i].W * ( sq[1].T + costM[s[j-1]][s[i]] ) + reopt[i][j].C;
+                cost.C = sq[2].C + reopt[j+1][LAST].W * ( sq[2].T + costM[s[i]][s[j+1]] ) + reopt[j+1][LAST].C;
+
+                //reopt[0][i-1] o reopt[j][j] o reopt[i+1][j-1] o reopt[i][i] o reopt[j+1][dimension]
+            }
+
+            /* if(cost.C < MAX_COST) // DEBUG
+            {
+                cout << "i = " << i << "\t j = " << j << "\t swap - " << cost.C << endl;
+            } */
+
+            delta = cost.C - preMoveCost;
+            if(delta < bestDelta){
+                bestDelta = delta;
+                *improved = true;
+
+                best_i = i;
+                best_j = j;
+            }
+        }
     }
+
+    if(*improved)
+    {
+        std::swap(s[best_j], s[best_i]);
+        calcReopt(s, reopt);
+    }
+
+    return s;
+}
