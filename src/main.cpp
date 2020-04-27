@@ -17,6 +17,11 @@ enum NL{N1, N2, N3, N4, N5};
 double **costM;
 int dimension;
 
+chrono::duration<double> timerReopt = chrono::system_clock::now() - chrono::system_clock::now();
+chrono::duration<double> timerSwap = chrono::system_clock::now() - chrono::system_clock::now();
+chrono::duration<double> timerRein = chrono::system_clock::now() - chrono::system_clock::now();
+chrono::duration<double> timer2Opt = chrono::system_clock::now() - chrono::system_clock::now();
+
 typedef struct{
     double C;
     double T;
@@ -83,6 +88,8 @@ vector<int> construction()
 
 void calcReopt(vector<int> &s, vector<vector<ReoptData>> &reopt)
 {
+    auto timerStart = chrono::system_clock::now();
+
     for (int i = 0; i < dimension; i++)
     {
         reopt[i][i].T = 0;
@@ -107,9 +114,15 @@ void calcReopt(vector<int> &s, vector<vector<ReoptData>> &reopt)
             reopt[j][i].C = reopt[j - 1][i].C + reopt[j - 1][i].W * (reopt[j][j].T + costM[s[j]][s[j - 1]]) + reopt[j][j].C;
         }
     }
+
+    auto timerEnd = chrono::system_clock::now();
+    timerReopt += timerEnd - timerStart;
 }
 
-vector<int> swap (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved){
+vector<int> swap (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved)
+{
+    auto timerStart = chrono::system_clock::now();
+
     int    best_i = 0, best_j = 0;
     double bestCost = reopt[0][LAST].C + reopt[0][LAST].T;
     ReoptData sq[4];
@@ -166,16 +179,25 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improve
         }
     }
 
+    auto timerEnd = chrono::system_clock::now();
+
     if(*improved)
     {
         std::swap(s[best_j], s[best_i]);
+        timerEnd = chrono::system_clock::now();
         calcReopt(s, reopt);
     }
+
+    timerSwap += timerEnd - timerStart;
+
 
     return s;
 }
 
-vector<int> flip (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved){
+vector<int> flip (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved)
+{
+    auto timerStart = chrono::system_clock::now();
+
     int best_i = 0, best_j = 0;
     double bestCost = reopt[0][LAST].C + reopt[0][LAST].T;
     ReoptData sq[2];
@@ -208,16 +230,24 @@ vector<int> flip (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improve
         }
     }
 
+    auto timerEnd = chrono::system_clock::now();
+
     if(*improved)
     {
         std::reverse(s.begin() + best_i, s.begin() + best_j + 1);
+        timerEnd = chrono::system_clock::now();
         calcReopt(s, reopt);
     }
+
+    timer2Opt += timerEnd - timerStart;
 
     return s;
 }
 
-vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved, int subsegSize){
+vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improved, int subsegSize)
+{
+    auto timerStart = chrono::system_clock::now();
+
     int best_i = 0, best_j = 0;
     double bestCost = reopt[0][LAST].C + reopt[0][LAST].T;
     ReoptData sq[3];
@@ -271,6 +301,8 @@ vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> &reopt, bool *
         }
     }
 
+    auto timerEnd = chrono::system_clock::now();
+
     if(*improved)
     {
         vector<int> subseg(s.begin() + best_i, s.begin() + best_i + subsegSize);
@@ -283,8 +315,12 @@ vector<int> reinsertion (vector<int> s, vector<vector<ReoptData>> &reopt, bool *
             s.insert(s.begin() + best_j, subseg.begin(), subseg.end());
         }
 
+        timerEnd = chrono::system_clock::now();
+
         calcReopt(s, reopt);
     }
+
+    timerRein += timerEnd - timerStart;
 
     return s;
 } 
@@ -385,8 +421,8 @@ int main(int argc, char** argv) {
 
     auto timerStart = chrono::system_clock::now();
 
-    const int I_MAX = 50;
-    const int I_ILS = (dimension >= 150) ? (dimension/2) : (dimension);
+    const int I_MAX = 10;
+    const int I_ILS = (dimension >= 100) ? 100 : (dimension);
 
     vector<int> solutionAlpha, solutionBeta, solutionOmega;
     double costAlpha, costBeta, costOmega = numeric_limits<double>::infinity();
@@ -426,7 +462,7 @@ int main(int argc, char** argv) {
     }
 
     auto timerEnd = chrono::system_clock::now();
-    chrono::duration<double> elapsedSeconds = timerEnd - timerStart;
+    chrono::duration<double> timerGilsRVND = timerEnd - timerStart;
 
     //PRINT COST AND SOLUTION
     std::cout << "SOLUTION:\n";
@@ -434,7 +470,12 @@ int main(int argc, char** argv) {
         std::cout << k << ' ';
     }
     std::cout << "\n\n" << "COST: " << costOmega << "\n";
-    std::cout << "TIME: " << elapsedSeconds.count() << "\n";
+    std::cout << "TIME: " << timerGilsRVND.count() << "\n";
+
+    std::cout << "TIME REOPT:\t" << timerReopt.count() << "\n";
+    std::cout << "TIME SWAP:\t" << timerSwap.count() << "\n";
+    std::cout << "TIME 2OPT:\t" << timer2Opt.count() << "\n";
+    std::cout << "TIME REIN:\t" << timerRein.count() << "\n";
 
     return 0;
 }
