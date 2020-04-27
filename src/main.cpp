@@ -75,17 +75,6 @@ vector<int> construction()
     return solution;
 }
 
-/* double solutionCost (std::vector<int> &s)
-{
-  double custo = 0;
-  for (int u = 0; u < dimension; u++)
-  {
-    custo += (dimension - u) * costM[s[u]][s[u + 1]];
-  }
-
-  return custo;
-} */
-
 void calcReopt(vector<int> &s, vector<vector<ReoptData>> &reopt)
 {
     auto timerStart = chrono::system_clock::now();
