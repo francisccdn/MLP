@@ -179,15 +179,62 @@ vector<int> swap (vector<int> s, vector<vector<ReoptData>> &reopt, bool *improve
         }
     }
 
-    auto timerEnd = chrono::system_clock::now();
+    //auto timerEnd = chrono::system_clock::now();
 
     if(*improved)
     {
         std::swap(s[best_j], s[best_i]);
-        timerEnd = chrono::system_clock::now();
-        calcReopt(s, reopt);
+        //timerEnd = chrono::system_clock::now();
+        //calcReopt(s, reopt);
+
+        for (int j = best_i; j <= best_j; j++)
+        {
+            for (int i = j - 1; i >= 0; i--)
+            {
+                reopt[i][j].W = reopt[i][j-1].W + reopt[j][j].W;
+                reopt[i][j].T = reopt[i][j - 1].T + costM[s[j - 1]][s[j]];
+                reopt[i][j].C = reopt[i][j-1].C + reopt[j][j].W * (reopt[i][j-1].T + costM[s[j - 1]][s[j]]) + reopt[j][j].C;
+
+                reopt[j][i].W = reopt[i][j].W;
+                reopt[j][i].T = reopt[i][j].T;
+
+                reopt[j][i].C = reopt[j - 1][i].C + reopt[j - 1][i].W * (reopt[j][j].T + costM[s[j]][s[j - 1]]) + reopt[j][j].C;
+            }
+        }
+
+        for (int i = best_i; i <= best_j; i++)
+        {
+            for (int j = best_j + 1; j <= dimension; j++)
+            {
+                reopt[i][j].W = reopt[i][j-1].W + reopt[j][j].W;
+                reopt[i][j].T = reopt[i][j - 1].T + costM[s[j - 1]][s[j]];
+                reopt[i][j].C = reopt[i][j-1].C + reopt[j][j].W * (reopt[i][j-1].T + costM[s[j - 1]][s[j]]) + reopt[j][j].C;
+
+                reopt[j][i].W = reopt[i][j].W;
+                reopt[j][i].T = reopt[i][j].T;
+
+                reopt[j][i].C = reopt[j - 1][i].C + reopt[j - 1][i].W * (reopt[j][j].T + costM[s[j]][s[j - 1]]) + reopt[j][j].C;
+            }
+        }
+
+        for (int i = best_i - 1, k = best_i, l; i >= 0; i--)
+        {
+            for (int j = best_j + 1; j <= dimension; j++)
+            {
+
+                reopt[i][j].W = reopt[i][k].W + reopt[k + 1][j].W;
+                reopt[i][j].T = reopt[i][k].T + costM[s[k]][s[k + 1]] + reopt[k + 1][j].T;
+                reopt[i][j].C = reopt[i][k].C + reopt[k + 1][j].W * (reopt[i][k].T + costM[s[k]][s[k + 1]]) + reopt[k + 1][j].C;
+
+                reopt[j][i].W = reopt[i][j].W;
+                reopt[j][i].T = reopt[i][j].T;
+
+                reopt[j][i].C = reopt[k][i].C + reopt[k][i].W * (reopt[j][k + 1].T + costM[s[k + 1]][s[k]]) + reopt[j][k + 1].C;
+            }
+        }
     }
 
+    auto timerEnd = chrono::system_clock::now();
     timerSwap += timerEnd - timerStart;
 
 
@@ -416,7 +463,7 @@ int main(int argc, char** argv) {
     srand(time(NULL));
 
     readData(argc, argv, &dimension, &costM);
-    //std::cout << "\tCOST MATRIX: \n";
+    //cout << "\tCOST MATRIX: \n";
     //printCostM();
 
     auto timerStart = chrono::system_clock::now();
@@ -465,17 +512,18 @@ int main(int argc, char** argv) {
     chrono::duration<double> timerGilsRVND = timerEnd - timerStart;
 
     //PRINT COST AND SOLUTION
-    std::cout << "SOLUTION:\n";
+    
+    /* std::cout << "SOLUTION:\n";
     for(auto k : solutionOmega){
         std::cout << k << ' ';
-    }
+    } */
     std::cout << "\n\n" << "COST: " << costOmega << "\n";
     std::cout << "TIME: " << timerGilsRVND.count() << "\n";
 
-    std::cout << "TIME REOPT:\t" << timerReopt.count() << "\n";
-    std::cout << "TIME SWAP:\t" << timerSwap.count() << "\n";
-    std::cout << "TIME 2OPT:\t" << timer2Opt.count() << "\n";
-    std::cout << "TIME REIN:\t" << timerRein.count() << "\n";
+    /* std::cout << "TIME REOPT: " << timerReopt.count() << "\n";
+    std::cout << "TIME SWAP: " << timerSwap.count() << "\n";
+    std::cout << "TIME 2OPT: " << timer2Opt.count() << "\n";
+    std::cout << "TIME REIN: " << timerRein.count() << "\n"; */
 
     return 0;
 }
