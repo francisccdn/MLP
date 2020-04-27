@@ -75,7 +75,7 @@ for line in fin.readlines():
         num = my_list[1]
         
         if flag == 0:
-            sum_cost += int(num)
+            sum_cost += float(num)
             flag = 1
         elif flag == 1:
             sum_time += float(num)

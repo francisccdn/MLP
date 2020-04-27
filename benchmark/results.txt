@@ -1,0 +1,111 @@
+instances/att48.tsp
+Avg cost: 209320.0
+Avg time: 0.1901338
+Off percentage: 0.0
+
+instances/berlin52.tsp
+Avg cost: 143721.0
+Avg time: 0.3034082000000001
+Off percentage: 0.0
+
+instances/brazil58.tsp
+Avg cost: 512361.0
+Avg time: 0.48375590000000007
+Off percentage: 0.0
+
+instances/dantzig42.tsp
+Avg cost: 12528.0
+Avg time: 0.15945979999999998
+Off percentage: 0.0
+
+instances/eil101.tsp
+Avg cost: 27513.0
+Avg time: 4.016569
+Off percentage: 0.0
+
+instances/eil51.tsp
+Avg cost: 10178.0
+Avg time: 0.27852000000000005
+Off percentage: 0.0
+
+instances/eil76.tsp
+Avg cost: 18030.8
+Avg time: 1.157206
+Off percentage: 0.3048509123275438
+
+instances/gr48.tsp
+Avg cost: 102378.0
+Avg time: 0.19050890000000004
+Off percentage: 0.0
+
+instances/gr96.tsp
+Avg cost: 2097682.0
+Avg time: 3.011221
+Off percentage: 0.024413852954219255
+
+instances/hk48.tsp
+Avg cost: 247926.0
+Avg time: 0.2073083
+Off percentage: 0.0
+
+instances/kroA100.tsp
+Avg cost: 983128.0
+Avg time: 3.7287600000000003
+Off percentage: 0.0
+
+instances/kroB100.tsp
+Avg cost: 986008.0
+Avg time: 3.9996179999999995
+Off percentage: 0.0
+
+instances/kroC100.tsp
+Avg cost: 961324.0
+Avg time: 3.398247
+Off percentage: 0.0
+
+instances/kroD100.tsp
+Avg cost: 976965.0
+Avg time: 3.048768
+Off percentage: 0.0
+
+instances/kroE100.tsp
+Avg cost: 971266.0
+Avg time: 3.7470179999999997
+Off percentage: 0.0
+
+instances/lin105.tsp
+Avg cost: 603910.0
+Avg time: 2.7682270000000004
+Off percentage: 0.0
+
+instances/pr107.tsp
+Avg cost: 2028854.0
+Avg time: 3.4316089999999995
+Off percentage: 0.10993641648730451
+
+instances/pr76.tsp
+Avg cost: 3461678.0
+Avg time: 0.9689862
+Off percentage: 0.18626770570628629
+
+instances/rat99.tsp
+Avg cost: 58027.3
+Avg time: 4.612099
+Off percentage: 0.07122408857310887
+
+instances/rd100.tsp
+Avg cost: 340112.9
+Avg time: 3.632199
+Off percentage: 0.019379673986249926
+
+instances/st70.tsp
+Avg cost: 20557.0
+Avg time: 0.8247753000000001
+Off percentage: 0.0
+
+instances/swiss42.tsp
+Avg cost: 22327.0
+Avg time: 0.11423180000000002
+Off percentage: 0.0
+
+-

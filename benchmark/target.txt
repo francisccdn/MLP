@@ -1,5 +1,4 @@
 instances/att48.tsp:209320
-instances/att532.tsp:5581240
 instances/berlin52.tsp:143721
 instances/brazil58.tsp:512361
 instances/dantzig42.tsp:12528
@@ -15,12 +14,8 @@ instances/kroC100.tsp:961324
 instances/kroD100.tsp:976965
 instances/kroE100.tsp:971266
 instances/lin105.tsp:603910
-instances/lin318.tsp:5560679
 instances/pr107.tsp:2026626
-instances/pr226.tsp:7100308
-instances/pr439.tsp:17688561
 instances/pr76.tsp:3455242
-instances/rat195.tsp:210191
 instances/rat99.tsp:57986
 instances/rd100.tsp:340047
 instances/st70.tsp:20557
